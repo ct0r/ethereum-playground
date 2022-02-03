@@ -1,0 +1,13 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "extensions": [
+    "eamodio.gitlens",
+    "mutantdino.resourcemonitor",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "juanblanco.solidity",
+    "svelte.svelte-vscode"
+  ]
+}
