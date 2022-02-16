@@ -1,79 +1,88 @@
+import { TransactionResponse } from "@ethersproject/abstract-provider";
+import { expect } from "chai";
 import { randomBytes } from "crypto";
-import { utils } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 
+const tx = (result: Promise<TransactionResponse>) =>
+  result.then((response) => response.wait());
+
 describe("Merkle", () => {
-  it("'verify' verifies", () => {
-    console.log(
-      proof(["a", "b", "c", "d", "e"].map(Buffer.from), 2).map((v) =>
-        Buffer.from(v).toString()
-      )
-    );
+  describe("verify", () => {
+    let merkle: Contract;
+    let root: Uint8Array;
+    let proof: Uint8Array[];
+    let signer: Signer;
+
+    beforeEach(async () => {
+      [, signer] = await ethers.getSigners();
+
+      const signerAddr = await signer.getAddress();
+      const randomAddrs = Array.from({ length: 4 }).map(
+        () => "0x" + randomBytes(20).toString("hex")
+      );
+
+      const coder = new ethers.utils.AbiCoder();
+      const items = [signerAddr, ...randomAddrs].map((addr) =>
+        ethers.utils.arrayify(
+          ethers.utils.keccak256(coder.encode(["address"], [addr]))
+        )
+      );
+
+      [root, proof] = getMerkleProof(items, 0);
+
+      merkle = await ethers
+        .getContractFactory("Merkle")
+        .then((merkle) => merkle.deploy(root))
+        .then((merkle) => merkle.deployed());
+    });
+
+    it("mint with valid proof", async () => {
+      await tx(merkle.connect(signer).claim(proof));
+
+      expect(await merkle.balanceOf(await signer.getAddress())).to.equal(1000);
+    });
+
+    it("fails with invalid proof", async () => {
+      await expect(tx(merkle.claim(proof))).to.be.revertedWith(
+        "You shall not claim!"
+      );
+    });
   });
-});
 
-// class MerkleTree {
-//   _layers: Uint8Array[][];
+  function getMerkleProof(
+    items: Uint8Array[],
+    index: number
+  ): [Uint8Array, Uint8Array[]] {
+    let proof = [];
 
-//   constructor(items: Uint8Array[], hash: (input: Uint8Array) => Uint8Array) {
-//     const layers = [items];
-//     for (let l = 0; layers[l].length > 1; l++) {
-//       const layer = [];
-//       for (let i = 0; i < layers[l].length; i += 2) {
-//         layer.push(hash(Buffer.concat([items[i], items[i + 1] ?? items[i]])));
-//       }
+    let layer = items;
+    for (let p = index; layer.length > 1; p = Math.floor(p / 2)) {
+      let nextLayer = [];
 
-//       layers.push(layer);
-//     }
+      for (let i = 0; i < layer.length; i += 2) {
+        const l = layer[i];
+        const r = layer[i + 1];
 
-//     this._layers = layers;
-//   }
+        let data;
+        if (r) {
+          data = new Uint8Array(l.length + r.length);
+          data.set(l);
+          data.set(r, l.length);
+        } else {
+          data = l;
+        }
 
-//   getProof(index: number): Uint8Array[] {
-//     const proof: Uint8Array[] = [];
-//     for (
-//       let l = 0, i = index;
-//       l < this._layers.length;
-//       l++, i = Math.floor(i / 2)
-//     ) {
-//       const item = this._layers[l][i % 2 ? i - 1 : i + 1];
-//       item && proof.push(item);
-//     }
+        const hash = ethers.utils.arrayify(ethers.utils.keccak256(data));
 
-//     return proof;
-//   }
-// }
-
-function proof(items: Uint8Array[], index: number): Uint8Array[] {
-  let proof = [];
-
-  const hash = (buf: Uint8Array) =>
-    ethers.utils.toUtf8Bytes(ethers.utils.keccak256(buf));
-
-  for (
-    let layer = items.map(hash), nextLayer = [], p = index;
-    layer.length > 1;
-    layer = nextLayer, p = Math.floor(p / 2)
-  ) {
-    for (let i = 0; i < layer.length; i += 2) {
-      const l = layer[i];
-      const r = layer[i + 1];
-
-      let input;
-      if (r) {
-        input = new Uint8Array(l.length + r.length);
-        input.set(l);
-        input.set(r, l.length);
-      } else {
-        input = l;
+        nextLayer.push(hash);
       }
 
-      // layer.push(hash(output));
-      nextLayer.push(input);
+      proof.push(layer[p % 2 ? p - 1 : p + 1] ?? layer[p]);
+
+      layer = nextLayer;
     }
 
-    proof.push(layer[p % 2 ? p - 1 : p + 1]);
+    return [layer[0], proof];
   }
-
-  return proof;
-}
+});

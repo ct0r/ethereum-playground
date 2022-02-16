@@ -3,10 +3,10 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MerkleClaim is ERC20 {
+contract Merkle is ERC20 {
     bytes32 private root;
 
-    constructor(bytes32 _root) ERC20("Claimable Token", "CT") {
+    constructor(bytes32 _root) ERC20("claimable token", "ct") {
         root = _root;
     }
 
@@ -16,7 +16,7 @@ contract MerkleClaim is ERC20 {
             hash = keccak256(abi.encodePacked(hash, _proof[i]));
         }
 
-        require(root == hash);
+        require(root == hash, "You shall not claim!");
 
         _mint(msg.sender, 1000);
     }
