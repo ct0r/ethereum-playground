@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "hardhat test",
+    "test": "hardhat test test/merkle/**",
     "node": "hardhat node"
   },
   "devDependencies": {
