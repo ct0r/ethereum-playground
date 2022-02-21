@@ -18,7 +18,7 @@ describe("Merkle", () => {
       [, signer] = await ethers.getSigners();
 
       const signerAddr = await signer.getAddress();
-      const randomAddrs = Array.from({ length: 4 }).map(
+      const randomAddrs = Array.from({ length: 100 }).map(
         () => "0x" + randomBytes(20).toString("hex")
       );
 
