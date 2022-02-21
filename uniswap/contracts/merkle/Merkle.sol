@@ -13,7 +13,7 @@ contract Merkle is ERC20 {
     function claim(bytes32[] calldata _proof) public {
         bytes32 hash = keccak256(abi.encode(msg.sender));
         for (uint256 i = 0; i < _proof.length; i++) {
-            hash = keccak256(abi.encodePacked(hash, _proof[i]));
+            hash = keccak256(abi.encode(hash, _proof[i]));
         }
 
         require(root == hash, "You shall not claim!");
