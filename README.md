@@ -27,6 +27,12 @@ npm run fr:bot
 npm run fr:test
 ```
 
+## Merkle Tree
+
+### Links
+
+https://flawed.net.nz/2018/02/21/attacking-merkle-trees-with-a-second-preimage-attack/index.html
+
 ## Assembly
 
 ### Links
