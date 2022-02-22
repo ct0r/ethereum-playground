@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "hardhat test",
+    "test": "hardhat test test/assembly/Assembly.ts",
     "node": "hardhat node"
   },
   "devDependencies": {

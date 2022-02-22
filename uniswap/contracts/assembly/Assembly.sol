@@ -33,4 +33,13 @@ contract Assembly {
             }
         }
     }
+
+    function returnString() public pure returns (string memory s) {
+        string memory q = "Hello";
+
+        assembly {
+            mstore(s, mload(q)) // length
+            mstore(add(s, 32), mload(add(q, 32))) // content
+        }
+    }
 }

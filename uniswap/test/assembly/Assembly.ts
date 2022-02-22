@@ -1,3 +1,4 @@
+import { expect } from "chai";
 import { randomBytes } from "crypto";
 import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
@@ -18,6 +19,7 @@ describe("Assembly", () => {
 
     it("hashAssembly", async () => {
       const addr = await signer.getAddress();
+
       await assembly.hashAddress(addr);
     });
 
@@ -26,6 +28,12 @@ describe("Assembly", () => {
       const b = randomBytes(32);
 
       await assembly.abiEncode(a, b);
+    });
+
+    it("returnString", async () => {
+      const str = await assembly.returnString();
+
+      expect(str).eq("Hello");
     });
   });
 });
