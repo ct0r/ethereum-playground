@@ -13,11 +13,6 @@ contract AssemblyMerkle {
     function containsSender(bytes32[] calldata _proof) public view {
         address addr = msg.sender;
 
-        bytes32 expected = keccak256(abi.encode(addr));
-        for (uint256 i = 0; i < _proof.length; i++) {
-            expected = keccak256(abi.encode(expected, _proof[i]));
-        }
-
         assembly {
             let hashPtr := mload(64)
             let bufferPtr := add(hashPtr, 32)
