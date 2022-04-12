@@ -41,12 +41,12 @@ describe("Pool", () => {
 
     // Deploy ERC20 contracts.
     const erc20Factory = await ethers.getContractFactory("ERC20Mock");
-
-    [aToken, bToken] = await Promise.all(
-      ["A", "B"].map((code) =>
-        erc20Factory.deploy(code, code).then((token) => token.deployed())
-      )
-    );
+    aToken = await erc20Factory
+      .deploy("A", "A")
+      .then((token) => token.deployed());
+    bToken = await erc20Factory
+      .deploy("B", "B")
+      .then((token) => token.deployed());
 
     // Deploy Pool contract.
     pool = await ethers
@@ -55,13 +55,10 @@ describe("Pool", () => {
       .then((contract) => contract.deployed());
 
     // Mint tokens to the wallet.
-    await Promise.all(
-      [aToken, bToken].map((token) =>
-        tx(token.mint(wallet.address, TOKEN_INIT_AMOUNT))
-      )
-    );
+    await tx(aToken.mint(wallet.address, TOKEN_INIT_AMOUNT));
+    await tx(bToken.mint(wallet.address, TOKEN_INIT_AMOUNT));
 
-    // Connect contracts to wallet.
+    // Connect contracts to the wallet.
     pool = pool.connect(wallet);
     aToken = aToken.connect(wallet);
     bToken = bToken.connect(wallet);
