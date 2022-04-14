@@ -37,7 +37,9 @@ contract CleverToken is ERC20 {
             delete _priceLimits[msg.sender];
         }
 
-        _transfer(address(this), msg.sender, amountToSend);
+        if (amountToSend > 0) {
+            _transfer(address(this), msg.sender, amountToSend);
+        }
     }
 }
 
