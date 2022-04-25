@@ -3,6 +3,7 @@ import { Contract, Signer, Transaction } from "ethers";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 
+const { AddressZero } = ethers.constants;
 const { parseEther } = ethers.utils;
 
 // Our smart contract assumes th
@@ -28,8 +29,8 @@ describe("CleverToken", () => {
     );
 
     cleverToken = await ethers
-      .getContractFactory("CleverToken")
-      .then((factory) => factory.deploy(aliceAddr, bobAddr))
+      .getContractFactory("CleverTokenMock")
+      .then((factory) => factory.deploy(AddressZero, aliceAddr, bobAddr))
       .then((cleverToken) => cleverToken.deployed());
   });
 
@@ -64,6 +65,34 @@ describe("CleverToken", () => {
     expect(aliceBalance).eq(10);
 
     await network.provider.send("evm_increaseTime", [SecondsPerDay * 305]);
+
+    [aliceBalance, bobBalance] = await unlock();
+    expect(bobBalance).eq(10);
+    expect(aliceBalance).eq(20);
+  });
+
+  it("'unlock' should transfer tokens if price requirements are met", async () => {
+    const unlock = async () => {
+      await tx(cleverToken.connect(alice).unlock());
+      await tx(cleverToken.connect(bob).unlock());
+
+      return [
+        await cleverToken.balanceOf(aliceAddr),
+        await cleverToken.balanceOf(bobAddr),
+      ];
+    };
+
+    let [aliceBalance, bobBalance] = await unlock();
+    expect(bobBalance).eq(5);
+    expect(aliceBalance).eq(10);
+
+    await tx(cleverToken.initialize(1500000000000000));
+
+    [aliceBalance, bobBalance] = await unlock();
+    expect(bobBalance).eq(10);
+    expect(aliceBalance).eq(10);
+
+    await tx(cleverToken.initialize(2000000000000000));
 
     [aliceBalance, bobBalance] = await unlock();
     expect(bobBalance).eq(10);
